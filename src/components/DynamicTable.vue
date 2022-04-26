@@ -4,13 +4,15 @@
       <thead>
         <tr class='table__titles'>
           <th></th>
-          <th class='px-7 py-2' v-for='column in columns' :key='column.field'>
+          <th class='px-7 py-2' v-for='column in columns'
+          :key='column.field' @click="sortTable(column.field)"
+          >
             {{ column.label }}
           </th>
         </tr>
       </thead>
       <tbody>
-        <tr v-for='(row, index) in rows' :key='row.id'
+        <tr v-for='(row, index) in data' :key='row.id'
           v-show="(pag - 1) * pagination <= index  && pag * pagination > index"
         >
           <td>
@@ -52,7 +54,7 @@
           </td>
           <td class='text-right'>
             <v-btn rounded icon small
-              v-show="pag * pagination / rows.length < 1" @click.prevent="pag += 1"
+              v-show="pag * pagination / data.length < 1" @click.prevent="pag += 1"
             >
               <v-icon>mdi-menu-right</v-icon>
             </v-btn>
@@ -60,6 +62,11 @@
         </tr>
       </tfoot>
     </table>
+    <div class="mt-4">
+       <v-btn outlined @click="AddColumn()" >
+        Add data
+      </v-btn>
+    </div>
     <div v-if="selected.length" class="my-4 d-flex flex-column">
       <DownloadData :selectedItems="selected"/>
     </div>
@@ -67,6 +74,7 @@
 </template>
 
 <script>
+import { mapState, mapActions } from 'vuex';
 import DownloadData from './DownloadData.vue';
 
 export default {
@@ -79,10 +87,9 @@ export default {
       type: Array,
       required: true,
     },
-    rows: {
-      type: Array,
-      required: true,
-    },
+  },
+  computed: {
+    ...mapState(['data']),
   },
   data: () => ({
     quantity: [5, 10, 15],
@@ -90,16 +97,59 @@ export default {
     selected: [],
     pag: 1,
     loading: false,
+    newItem: {
+      id: 7,
+      plate: '8964LVF',
+      location: {
+        country: 'Spain',
+        city: 'Madrid',
+        postal_code: '28080',
+        address: 'Calle Cocacola',
+      },
+      speed: 73.43,
+      speed_average: 24.76,
+      temperature_front: 12.8,
+      temperature_back: 7.25,
+    },
+    ascending: false,
+    sortColumn: '',
   }),
   methods: {
-    remove() {
-      // eslint-disable-next-line
-      // debugger;
-      this.loading = true;
-      setTimeout(() => {
-        this.loading = false;
-      }, 3000);
+    sortTable(col) {
+      if (this.sortColumn === col) {
+        this.ascending = !this.ascending;
+      } else {
+        this.ascending = true;
+        this.sortColumn = col;
+      }
+
+      const { ascending } = this;
+      this.data.sort((a, b) => {
+        // need to do a new sort if user select 'location' because 'location'
+        // constains an object not a primitive type
+        if (col === 'location') {
+          if (a[col].postal_code > b[col].postal_code) {
+            return ascending ? 1 : -1;
+          } if (a[col].postal_code < b[col].postal_code) {
+            return ascending ? -1 : 1;
+          }
+          return 0;
+        }
+
+        if (a[col] > b[col]) {
+          return ascending ? 1 : -1;
+        } if (a[col] < b[col]) {
+          return ascending ? -1 : 1;
+        }
+        return 0;
+      });
     },
+    AddColumn() {
+      this.actAddColumn(this.newItem);
+    },
+    ...mapActions([
+      'actAddColumn',
+    ]),
   },
 };
 </script>
@@ -116,6 +166,9 @@ export default {
     padding: .5em
     border-bottom: 1px solid $light-grey
     text-align: center
+
+  th
+    cursor: pointer
 
   th:first-child
     border-radius: .3em 0 0 .3em
