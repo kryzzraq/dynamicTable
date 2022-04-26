@@ -41,6 +41,14 @@
         ></v-progress-circular>
       </v-container>
     </v-main>
+   <v-footer padless color="primary">
+    <v-col
+      class="text-center"
+      cols="12"
+    >
+      {{ new Date().getFullYear() }} — <strong> Vue & Vuetify</strong>
+    </v-col>
+  </v-footer>
   </v-app>
 </template>
 
